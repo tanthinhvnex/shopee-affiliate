@@ -190,11 +190,69 @@ async function resolveShortLink(shortUrl) {
     }
 }
 
+// ==================== INSTAGRAM REDIRECT ====================
+const AFFILIATE_ID = '17352620178';
+
+// Generate random tracking ID
+function generateTrackingId() {
+    const chars = '0123456789abcdefghijklmnopqrstuvwxyz';
+    let result = '';
+    for (let i = 0; i < 12; i++) {
+        result += chars.charAt(Math.floor(Math.random() * chars.length));
+    }
+    return result;
+}
+
+// Build Instagram redirect URL
+async function buildInstagramRedirectUrl(productUrl, affId, subId) {
+    const affiliatePrefix = 'an_' + affId;
+
+    const params = {
+        mmp_pid: affiliatePrefix,
+        utm_medium: 'affiliates',
+        utm_source: affiliatePrefix,
+        utm_content: subId,
+        utm_campaign: '-',
+        uls_trackid: generateTrackingId(),
+        utm_term: generateTrackingId()
+    };
+
+    const url = new URL(productUrl);
+    Object.keys(params).forEach(key => {
+        url.searchParams.set(key, params[key]);
+    });
+
+    return url.toString();
+}
+
+// Handle Instagram redirect
+async function handleInstagramRedirect(productUrl, affId, subId) {
+    try {
+        const redirectUrl = await buildInstagramRedirectUrl(productUrl, affId, subId);
+        return Response.redirect(redirectUrl, 302);
+    } catch (error) {
+        return Response.redirect(productUrl, 302);
+    }
+}
+
+// ==================== MAIN HANDLER ====================
+
 // Main handler
 async function handleRequest(request) {
     const url = new URL(request.url);
 
-    // Lấy URL cần xử lý từ query param
+    // Check if this is Instagram redirect request
+    const goUrl = url.searchParams.get('go');
+    const affType = url.searchParams.get('aff_type');
+    const affId = url.searchParams.get('aff_id') || AFFILIATE_ID;
+    const subId = url.searchParams.get('sub_id') || 'product----ig';
+
+    if (goUrl && affType === 'instagram') {
+        // Instagram redirect mode
+        return handleInstagramRedirect(goUrl, affId, subId);
+    }
+
+    // Lấy URL cần xử lý từ query param (short link resolver mode)
     const targetUrl = url.searchParams.get('url');
 
     if (!targetUrl) {

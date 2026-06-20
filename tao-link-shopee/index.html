@@ -577,16 +577,14 @@
             const subId = CONFIG.platforms[platform].subId;
 
             if (platform === 'instagram') {
-                // Instagram: Direct URL để trigger app mở
-                const affiliatePrefix = 'an_' + CONFIG.affiliateId;
+                // Instagram: Dùng Worker để redirect với đầy đủ params (trigger app mở)
                 const params = new URLSearchParams({
-                    mmp_pid: affiliatePrefix,
-                    utm_medium: 'affiliates',
-                    utm_source: affiliatePrefix,
-                    utm_content: subId,
-                    utm_campaign: '-'
+                    go: canonicalUrl,
+                    aff_type: 'instagram',
+                    aff_id: CONFIG.affiliateId,
+                    sub_id: subId
                 });
-                return `${canonicalUrl}?${params.toString()}`;
+                return `${CONFIG.workerUrl}?${params.toString()}`;
             } else {
                 // Facebook: Dùng s.shopee.vn/an_redir
                 const encodedUrl = encodeURIComponent(canonicalUrl);
